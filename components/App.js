@@ -15,48 +15,56 @@ App = React.createClass({
             loading: true
         });
 
-        this.getGif(searchingText, function(gif){
-            this.setState({
-                loading: false,
-                gif: gif,
-                searchingText: searchingText
-            });
-        }.bind(this));
+        this.getGif(searchingText)
+            .then( (gif) => {
+                this.setState({
+                    loading: false,
+                    gif: gif,
+                    searchingText: searchingText
+                });
+
+            })
+            .catch((error) => console.error(error));
+        
     },
 
-    getGif: function(searchingText, callback) {
-        var url = GIPHY_API_URL + '/v1/gifs/random?api_key=' + GIPHY_PUB_KEY + '&tag=' + searchingText;
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var data = JSON.parse(xhr.responseText).data;
-                var gif = {};
+    getGif: function(searchingText) {
+        return new Promise( (resolve, reject) => { 
+            const url = GIPHY_API_URL + '/v1/gifs/random?api_key=' + GIPHY_PUB_KEY + '&tag=' + searchingText;
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var data = JSON.parse(xhr.responseText).data;
+                    var gif = {}; 
 
-                if(data.length !== 0) {
-                    gif = {
-                        url: data.fixed_width_downsampled_url,
-                        sourceUrl: data.url,
-                    };
+                    if(data.length !== 0) {
+                        gif = {
+                            url: data.fixed_width_downsampled_url,
+                            sourceUrl: data.url,
+                        };
+                    } else {
+                        gif = {
+                            url: 'nonMatches.png',
+                            sourceUrl: '',
+                        };
+                    }
+                    resolve(gif);
                 } else {
-                    gif = {
-                        url: 'nonMatches.png',
-                        sourceUrl: '',
-                    };
+                    reject(new Error('Something goes wrong!'));
                 }
-                callback(gif);
-            }
-        };
-        xhr.send();
+            };
+            xhr.send();
+        });    
     },
 
     render: function(){
 
         var styles = {
-            margin: '0 auto',
+            margin: '0 auto', 
             textAlign: 'center',
             width: '90%'
-        };
+        };  
 
         return (
             <div style={styles}>
